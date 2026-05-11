@@ -1,7 +1,13 @@
+# Custom ignored files for Python projects
+debugging/
+Egg-1/
+*.pt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
 *$py.class
+.vscode/
 
 # C extensions
 *.so
