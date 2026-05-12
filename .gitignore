@@ -2,6 +2,7 @@
 debugging/
 Egg-1/
 *.pt
+mlruns/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
