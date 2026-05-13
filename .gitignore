@@ -3,6 +3,9 @@ debugging/
 Egg-1/
 *.pt
 mlruns/
+runs/
+weights/
+mlartifacts/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
