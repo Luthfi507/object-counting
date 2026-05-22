@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Object Counting Playground</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Object Counting Playground</h1>
+            <p>Real-time object detection with YOLO11</p>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <h2>Upload & Predict</h2>
+
+                <div class="mode-selector">
+                    <button class="mode-btn active" data-mode="upload">📤 Upload</button>
+                    <button class="mode-btn" data-mode="webcam">📹 Webcam</button>
+                </div>
+
+                <div id="uploadMode" class="upload-section">
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📁</div>
+                        <div class="upload-text">Click to upload or drag and drop</div>
+                        <div class="upload-hint">PNG, JPG, GIF up to 10MB</div>
+                    </div>
+                    <input type="file" id="fileInput" accept="image/*">
+                    <div class="button-group">
+                        <button class="btn-secondary" id="clearBtn">Clear</button>
+                        <button class="btn-primary" id="predictBtn" disabled>Predict</button>
+                    </div>
+                </div>
+
+                <div id="webcamMode" class="webcam-section" style="display: none;">
+                    <div class="webcam-container" id="webcamContainer">
+                        <video id="webcam" autoplay muted playsinline></video>
+                    </div>
+                    <div class="webcam-controls">
+                        <button class="btn-primary" id="startCameraBtn">Start Camera</button>
+                        <button class="btn-secondary" id="stopCameraBtn">Stop Camera</button>
+                        <button class="btn-primary" id="captureBtn">Capture & Predict</button>
+                        <button class="btn-secondary" id="cameraDebugBtn">Test Camera</button>
+                    </div>
+                    <div id="cameraDebugStatus" class="debug-status"></div>
+                </div>
+
+                <img id="preview" class="image-preview" alt="Preview">
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Processing...</p>
+                </div>
+                <div id="status" class="status"></div>
+            </div>
+
+            <div class="section">
+                <h2>Results & Detections</h2>
+
+                <div class="model-info">
+                    <p><strong>Model:</strong> <span id="modelName">Loading...</span></p>
+                    <p><strong>Version:</strong> <span id="modelVersion">-</span></p>
+                    <p><strong>Status:</strong> <span id="modelStatus">🔄 Connecting...</span></p>
+                </div>
+
+                <div class="count-display" id="countDisplay">0</div>
+
+                <h3>Detections:</h3>
+                <div class="detections-list" id="detectionsList">
+                    <p>No detections yet. Upload an image to get started.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

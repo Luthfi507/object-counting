@@ -1,0 +1,329 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.container {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 1200px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    text-align: center;
+}
+
+.header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.header p {
+    font-size: 1.1em;
+    opacity: 0.9;
+}
+
+.content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    padding: 30px;
+}
+
+@media (max-width: 768px) {
+    .content {
+        grid-template-columns: 1fr;
+    }
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+}
+
+.section h2 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 1.3em;
+}
+
+.upload-area {
+    border: 3px dashed #667eea;
+    border-radius: 10px;
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #f8f9ff;
+}
+
+.upload-area:hover {
+    border-color: #764ba2;
+    background: #f0f2ff;
+}
+
+.upload-area.dragover {
+    border-color: #764ba2;
+    background: #e8ebff;
+    transform: scale(1.02);
+}
+
+.upload-icon {
+    font-size: 3em;
+    margin-bottom: 15px;
+}
+
+.upload-text {
+    color: #666;
+    font-size: 1.1em;
+    margin-bottom: 10px;
+}
+
+.upload-hint {
+    color: #999;
+    font-size: 0.9em;
+}
+
+#fileInput {
+    display: none;
+}
+
+.button-group,
+.webcam-controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+button {
+    flex: 1;
+    min-width: 120px;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.btn-secondary:hover {
+    background: #e0e0e0;
+}
+
+.btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.image-preview {
+    width: 100%;
+    height: 400px;
+    border-radius: 10px;
+    object-fit: contain;
+    background: #f5f5f5;
+    margin: 15px 0;
+    display: none;
+}
+
+.image-preview.active {
+    display: block;
+}
+
+.model-info {
+    background: #f8f9ff;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border-left: 4px solid #667eea;
+}
+
+.model-info p {
+    color: #666;
+    margin: 5px 0;
+    font-size: 0.95em;
+}
+
+.model-info strong {
+    color: #333;
+}
+
+.detections-list {
+    background: #f8f9ff;
+    border-radius: 8px;
+    padding: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.detection-item {
+    background: white;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    border-left: 4px solid #667eea;
+}
+
+.detection-item:last-child {
+    margin-bottom: 0;
+}
+
+.detection-class {
+    font-weight: 600;
+    color: #333;
+    font-size: 1.1em;
+}
+
+.detection-confidence {
+    color: #667eea;
+    font-size: 0.95em;
+    margin-top: 5px;
+}
+
+.detection-bbox {
+    color: #999;
+    font-size: 0.85em;
+    margin-top: 5px;
+    font-family: monospace;
+}
+
+.count-display {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: #667eea;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.loading {
+    display: none;
+    text-align: center;
+    padding: 20px;
+}
+
+.loading.active {
+    display: block;
+}
+
+.spinner {
+    border: 4px solid #f0f0f0;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.status,
+.debug-status {
+    padding: 15px;
+    border-radius: 8px;
+    margin: 10px 0;
+    display: none;
+    font-weight: 600;
+}
+
+.status.active,
+.debug-status.active {
+    display: block;
+}
+
+.status.success {
+    background: #d4edda;
+    color: #155724;
+    border-left: 4px solid #28a745;
+}
+
+.status.error,
+.debug-status.error {
+    background: #f8d7da;
+    color: #721c24;
+    border-left: 4px solid #f5c6cb;
+}
+
+.debug-status.info {
+    background: #e8f0ff;
+    color: #1f3c88;
+    border-left: 4px solid #3f64d1;
+}
+
+.mode-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.mode-btn {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #ddd;
+    background: white;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.mode-btn.active {
+    border-color: #667eea;
+    background: #f0f2ff;
+    color: #667eea;
+    font-weight: 600;
+}
+
+.webcam-container {
+    position: relative;
+    width: 100%;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #000;
+    display: none;
+}
+
+.webcam-container.active {
+    display: block;
+}
+
+#webcam {
+    width: 100%;
+    height: auto;
+    display: block;
+}

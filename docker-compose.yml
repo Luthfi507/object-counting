@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:latest
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow_data:/mlflow
+    command: mlflow server --host 0.0.0.0 --backend-store-uri file:///mlflow
+
+  object-counting-api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    depends_on:
+      - mlflow
+    volumes:
+      - ./mlruns:/app/mlruns
+      - ./runs:/app/runs
+      - ./dataset:/app/dataset
+    command: python -m src.server
+
+volumes:
+  mlflow_data:

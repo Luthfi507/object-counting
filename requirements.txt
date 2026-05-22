@@ -1,0 +1,16 @@
+--extra-index-url https://download.pytorch.org/whl/cu124
+
+ipykernel==7.2.0
+ultralytics
+roboflow
+mlflow==2.19.0
+torch
+torchvision
+prometheus-client
+fastapi
+uvicorn[standard]
+onnx
+onnxruntime-gpu
+loguru
+python-multipart
+pillow

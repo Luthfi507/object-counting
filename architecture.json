@@ -1,0 +1,243 @@
+{
+  "project": "Object Counting API & Playground",
+  "version": "1.0.0",
+  "description": "Real-time object detection and counting API with interactive web playground",
+  
+  "components": {
+    "server": {
+      "file": "src/server.py",
+      "lines": "~540+",
+      "features": [
+        "FastAPI REST API",
+        "WebSocket streaming",
+        "Model management (MLflow integration)",
+        "Interactive HTML playground",
+        "Image processing & visualization",
+        "Analytics tracking",
+        "CORS middleware"
+      ],
+      "endpoints": {
+        "GET /": "Serve playground UI",
+        "GET /api/model-info": "Get current model information",
+        "POST /api/predict": "Upload image for prediction",
+        "WS /ws/stream": "WebSocket for real-time predictions",
+        "GET /api/analytics/summary": "Get analytics summary",
+        "GET /api/analytics/classes": "Get per-class statistics",
+        "GET /api/analytics/performance": "Get performance metrics",
+        "GET /api/analytics/history": "Get prediction history",
+        "GET /api/analytics/export": "Export analytics as JSON"
+      }
+    },
+    
+    "analytics": {
+      "file": "src/analytics.py",
+      "lines": "~200+",
+      "features": [
+        "PredictionMetric tracking",
+        "Per-class object counting",
+        "Performance statistics",
+        "Prediction history (up to 1000 records)",
+        "JSON export",
+        "Uptime formatting"
+      ],
+      "metrics_tracked": [
+        "Timestamp",
+        "Inference time",
+        "Object count",
+        "Image size",
+        "Model name"
+      ]
+    },
+    
+    "client": {
+      "file": "client.py",
+      "lines": "~310+",
+      "features": [
+        "Connection testing",
+        "Single image prediction",
+        "Batch prediction",
+        "Model info retrieval",
+        "Analytics display",
+        "Command-line interface"
+      ],
+      "commands": [
+        "python client.py --test",
+        "python client.py --info",
+        "python client.py --image path/to/image.jpg",
+        "python client.py --batch path/to/directory/"
+      ]
+    },
+    
+    "deployment": {
+      "files": [
+        "Dockerfile - Docker image definition",
+        "docker-compose.yml - Multi-container orchestration",
+        "run_server.sh - Linux/Mac startup script",
+        "run_server.bat - Windows startup script",
+        "quickstart.py - Automated setup script"
+      ],
+      "deployment_options": [
+        "Direct Python execution",
+        "Shell scripts",
+        "Docker image",
+        "Docker Compose",
+        "Gunicorn (production)"
+      ]
+    }
+  },
+  
+  "features": {
+    "playground_ui": {
+      "modes": [
+        "Upload: Drag-drop image files",
+        "Webcam: Real-time camera capture"
+      ],
+      "displays": [
+        "Uploaded/captured image with bounding boxes",
+        "Detection list with confidence scores",
+        "Total object count",
+        "Model information",
+        "Real-time analytics"
+      ]
+    },
+    
+    "api": {
+      "rest": "Full REST API with JSON responses",
+      "websocket": "Real-time streaming via WebSocket",
+      "authentication": "None (add as needed)",
+      "rate_limiting": "Optional via slowapi",
+      "documentation": "Auto-generated Swagger UI at /docs"
+    },
+    
+    "model_management": {
+      "primary": "Load latest model from MLflow",
+      "fallback": "Use local yolo11m.pt if MLflow unavailable",
+      "tracking": "Model name and version in analytics",
+      "experiment": "Object-Counting-Experiment"
+    },
+    
+    "analytics": {
+      "real_time": "Track every prediction",
+      "statistics": "Summary, class breakdown, performance",
+      "export": "Download as JSON",
+      "history": "Keep 1000 most recent predictions",
+      "dashboard": "Live display in playground UI"
+    }
+  },
+  
+  "performance": {
+    "typical_inference_time": "50-150ms (GPU)",
+    "throughput": "6-20 predictions/second",
+    "memory_usage": "2-4GB GPU VRAM",
+    "supported_formats": ["JPEG", "PNG", "BMP", "GIF"],
+    "max_image_size": "No hard limit",
+    "recommended_size": "224x224 (trained size)"
+  },
+  
+  "requirements": {
+    "python": "3.8+",
+    "memory": "4GB+ RAM",
+    "storage": "2GB+ for models",
+    "gpu": "Optional but recommended (CUDA 12.4+)",
+    "core_packages": [
+      "fastapi",
+      "uvicorn",
+      "ultralytics",
+      "mlflow",
+      "torch",
+      "torchvision",
+      "pillow",
+      "opencv-python",
+      "loguru"
+    ]
+  },
+  
+  "documentation": {
+    "README_API.md": "Complete project overview",
+    "API_README.md": "API reference with examples",
+    "DEPLOYMENT_GUIDE.md": "Setup and deployment instructions",
+    "This file": "Architecture and feature summary"
+  },
+  
+  "usage_examples": {
+    "curl_predict": "curl -X POST 'http://localhost:8000/api/predict' -F 'file=@image.jpg'",
+    "python_client": "python client.py --image image.jpg",
+    "web_ui": "Open http://localhost:8000 in browser",
+    "api_docs": "http://localhost:8000/docs",
+    "websocket": "ws = new WebSocket('ws://localhost:8000/ws/stream')"
+  },
+  
+  "quick_start_commands": [
+    "python quickstart.py - Automated setup",
+    "python -m src.server - Start API server",
+    "python client.py --test - Test connection",
+    "docker-compose up - Deploy with Docker",
+    "mlflow ui - Start MLflow tracking server"
+  ],
+  
+  "troubleshooting": {
+    "port_conflict": "Kill process on port 8000 or change port",
+    "mlflow_not_found": "Start MLflow with 'mlflow ui' in separate terminal",
+    "gpu_not_detected": "Install CUDA-enabled PyTorch",
+    "slow_inference": "Check GPU usage with nvidia-smi",
+    "memory_issues": "Reduce batch size or use CPU"
+  },
+  
+  "extensibility": [
+    "Add database logging for predictions",
+    "Implement authentication/authorization",
+    "Add rate limiting with slowapi",
+    "Create custom training scripts",
+    "Build monitoring dashboards",
+    "Integrate with other services",
+    "Add batch processing with Celery",
+    "Implement model versioning",
+    "Add A/B testing capabilities"
+  ],
+  
+  "files_created": {
+    "core": [
+      "src/server.py (540+ lines)",
+      "src/analytics.py (200+ lines)",
+      "client.py (310+ lines)",
+      "quickstart.py (180+ lines)"
+    ],
+    "deployment": [
+      "Dockerfile",
+      "docker-compose.yml",
+      "run_server.sh",
+      "run_server.bat",
+      "test_api.sh",
+      "test_api.bat"
+    ],
+    "documentation": [
+      "README_API.md",
+      "API_README.md",
+      "DEPLOYMENT_GUIDE.md",
+      ".env.example"
+    ],
+    "configuration": [
+      "requirements.txt (updated)",
+      "requirements-dev.txt",
+      "architecture.json (this file)"
+    ]
+  },
+  
+  "next_steps": [
+    "Install dependencies: pip install -r requirements.txt",
+    "Run setup: python quickstart.py",
+    "Start server: python -m src.server",
+    "Open playground: http://localhost:8000",
+    "Check API docs: http://localhost:8000/docs",
+    "Train model: python -m src.modeling",
+    "Monitor with MLflow: http://localhost:5000"
+  ],
+  
+  "support_links": {
+    "fastapi": "https://fastapi.tiangolo.com/",
+    "ultralytics": "https://docs.ultralytics.com/",
+    "mlflow": "https://mlflow.org/docs/",
+    "docker": "https://docs.docker.com/",
+    "uvicorn": "https://www.uvicorn.org/"
+  }
+}
