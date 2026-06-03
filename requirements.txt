@@ -1,0 +1,14 @@
+--extra-index-url https://download.pytorch.org/whl/cu124
+
+ipykernel
+ultralytics
+mlflow
+dagshub
+torch
+torchvision
+prometheus-client
+fastapi
+onnx
+onnxruntime-gpu
+loguru
+roboflow==1.2.0

@@ -1,11 +1,6 @@
 # Custom ignored files for Python projects
 debugging/
-Egg-1/
-*.pt
-mlruns/
-runs/
-weights/
-mlartifacts/
+.vscode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

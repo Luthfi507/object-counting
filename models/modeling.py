@@ -1,30 +1,35 @@
 import os
+from dotenv import load_dotenv
 import pandas as pd
 from datetime import datetime, timedelta
 import pytz
 from time import time
 from loguru import logger
 from ultralytics import YOLO
+from ultralytics.utils import SETTINGS
 import torch
 
 import mlflow
 from wrapper import YOLOWrapper
+load_dotenv()
 
-project_dir = os.path.dirname(__file__)
-data_dir = os.path.join(project_dir, '..', 'dataset', 'Egg-1')
+data_dir = os.getenv("DATASET_DIRECTORY") + '/vehicles-2'
 run_name = str(datetime.now(pytz.utc).astimezone(pytz.timezone('Asia/Jakarta')).strftime("%d-%m-%y:%H-%M-%S-%f"))
 
-mlflow.set_tracking_uri("http://127.0.0.1:5001")
-mlflow.set_experiment("Object-Counting-Experiment")
+mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI"))
+mlflow.set_experiment("object-counting")
+SETTINGS.update(runs_dir=os.getenv("RUNS_DIR"), weights_dir=os.getenv("WEIGHTS_DIR"))
 
 def format_time(t: float):
     return timedelta(seconds=t)
 
 class Trainer:
-    def __init__(self, data, model_type='yolo11m'):
+    def __init__(self, data, project_name, model_type='yolo11m'):
         self.data = data
+        self.project_name = project_name
         self.model_type = model_type
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        logger.info(f"Using device: {self.device}")
 
     def train(self, epochs, imgsz, batch, **kwargs):
         logger.info(f"Starting training with model: {self.model_type}")
@@ -35,12 +40,12 @@ class Trainer:
             epochs=epochs,
             imgsz=imgsz,
             batch=batch,
+            project=self.project_name,
             device=self.device,
-            save_dir=os.path.join(project_dir, '..', 'monitoring', 'runs'),
             exist_ok=True,
             **kwargs
         )
-        # model.export(format='onnx', dynamic=True)
+        model.export(format='onnx', dynamic=True)
         elapsed = time() - start
         logger.success(f"Training completed in {format_time(elapsed)} seconds")
         return results.save_dir
@@ -86,8 +91,8 @@ class Trainer:
             split='test',
             imgsz=224,
             batch=8,
+            project=self.project_name,
             device=self.device,
-            save_dir=os.path.join(project_dir, '..', 'monitoring', 'runs'),
             exist_ok=True
         )
         metrics = results.results_dict
@@ -123,9 +128,9 @@ class Trainer:
 if __name__ == "__main__":
     # Define training parameters
     data = os.path.join(data_dir, 'data.yaml')
-    epochs = 3
+    epochs = 50
     imgsz = 224
-    batch = 8
+    batch = 16
 
     hyps = {
         'lr0': 0.01,  # initial learning rate
@@ -141,6 +146,6 @@ if __name__ == "__main__":
         'erasing': 0.2,  # random erasing probability
     }
 
-    trainer = Trainer(data=data)
+    trainer = Trainer(data=data, project_name="car-counting")
     eval_results = trainer.run(epochs=epochs, imgsz=imgsz, batch=batch, **hyps)
     print(eval_results)
