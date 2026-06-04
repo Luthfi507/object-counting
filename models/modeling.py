@@ -101,6 +101,7 @@ class Trainer:
         return {k.replace('metrics/', '').replace('(B)', ' testing'): v for k, v in metrics.items() if 'metrics' in k}
 
     def run(self, epochs, imgsz, batch, **kwargs):
+        start = time()
 
         with mlflow.start_run(run_name=run_name):
             runs_dir = self.train(epochs, imgsz, batch, **kwargs)
@@ -123,12 +124,14 @@ class Trainer:
                 artifacts={'model_path': best_path}
             )
 
+        total_elapsed = time() - start
+        logger.success(f"Total run completed in {format_time(total_elapsed)} seconds")
         return eval_results
     
 if __name__ == "__main__":
     # Define training parameters
     data = os.path.join(data_dir, 'data.yaml')
-    epochs = 50
+    epochs = 1
     imgsz = 224
     batch = 16
 

@@ -9,6 +9,7 @@ torchvision
 prometheus-client
 fastapi
 onnx
+onnxruntime
 onnxruntime-gpu
 loguru
 roboflow==1.2.0

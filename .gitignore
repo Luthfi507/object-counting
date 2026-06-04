@@ -1,6 +1,6 @@
 # Custom ignored files for Python projects
 debugging/
-.vscode/
+output/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
