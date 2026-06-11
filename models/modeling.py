@@ -1,4 +1,6 @@
 import os
+import shutil
+from pathlib import Path
 from dotenv import load_dotenv
 import pandas as pd
 from datetime import datetime, timedelta
@@ -6,14 +8,16 @@ import pytz
 from time import time
 from loguru import logger
 from ultralytics import YOLO
-from ultralytics.utils import SETTINGS
+from ultralytics.utils import SETTINGS, downloads
 import torch
 
 import mlflow
 from wrapper import YOLOWrapper
 load_dotenv()
 
-data_dir = os.getenv("DATASET_DIRECTORY") + '/vehicles-2'
+project_dir = os.path.dirname(__file__)
+
+data_dir = os.getenv("DATASET_DIRECTORY") + '/Car-1'
 run_name = str(datetime.now(pytz.utc).astimezone(pytz.timezone('Asia/Jakarta')).strftime("%d-%m-%y:%H-%M-%S-%f"))
 
 mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI"))
@@ -28,14 +32,19 @@ class Trainer:
         self.data = data
         self.project_name = project_name
         self.model_type = model_type
+        self.model = YOLO(f"{self.model_type}.pt")
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         logger.info(f"Using device: {self.device}")
 
     def train(self, epochs, imgsz, batch, **kwargs):
         logger.info(f"Starting training with model: {self.model_type}")
         start = time()
-        model = YOLO(f"{self.model_type}.pt")
-        results = model.train(
+
+        if not (Path(SETTINGS['weights_dir']) / f"{self.model_type}.pt").exists():
+            logger.warning(f"Model weights for {self.model_type} not found. Attempting to download...")
+            downloads.attempt_download_asset(f"{self.model_type}.pt", dir=SETTINGS['weights_dir'])
+
+        self.model.train(
             data=self.data,
             epochs=epochs,
             imgsz=imgsz,
@@ -45,14 +54,13 @@ class Trainer:
             exist_ok=True,
             **kwargs
         )
-        model.export(format='onnx', dynamic=True)
+        self.model.export(format='onnx', dynamic=True)
         elapsed = time() - start
         logger.success(f"Training completed in {format_time(elapsed)} seconds")
-        return results.save_dir
 
     def log_training_metrics(self, runs_dir: str):
         logger.info("Log training metrics")
-        csv_path = os.path.join(runs_dir, 'results.csv')
+        csv_path = os.path.join(runs_dir, 'train', 'results.csv')
         if not os.path.exists(csv_path):
             logger.warning(f"results.csv not found in {runs_dir}")
             return
@@ -102,15 +110,15 @@ class Trainer:
 
     def run(self, epochs, imgsz, batch, **kwargs):
         start = time()
+        self.train(epochs, imgsz, batch, **kwargs)
+        runs_dir = os.path.join(SETTINGS['runs_dir'], self.model.task, self.project_name)
+        best_pt = os.path.join(runs_dir, 'train', 'weights', 'best.pt')
+        best_onnx = os.path.join(runs_dir, 'train', 'weights', 'best.onnx')
 
         with mlflow.start_run(run_name=run_name):
-            runs_dir = self.train(epochs, imgsz, batch, **kwargs)
             self.log_training_metrics(runs_dir)
+            eval_results = self.eval(best_pt)
 
-            best_path = os.path.join(runs_dir, 'weights', 'best.pt')
-            eval_results = self.eval(best_path)
-
-            mlflow.log_artifacts(runs_dir)
             mlflow.log_metrics(eval_results)  
             mlflow.log_params({
                 'epochs': epochs,
@@ -118,12 +126,25 @@ class Trainer:
                 'batch': batch,
                 **kwargs
             })
-            mlflow.pyfunc.log_model(
-                artifact_path='model',
+            wrapper_path = os.path.join(project_dir, 'wrapper.py')
+
+            mlflow.pyfunc.save_model(
+                path='model',
                 python_model=YOLOWrapper(),
-                artifacts={'model_path': best_path}
+                artifacts={'model_path': best_onnx},
+                code_paths=[wrapper_path]
             )
 
+            mlflow.pyfunc.log_model(
+                name='model',
+                python_model=YOLOWrapper(),
+                artifacts={'model_path': best_onnx},
+                code_paths=[wrapper_path],
+            )
+
+            logger.info(f"Run id: {mlflow.active_run().info.run_id}")
+
+        shutil.rmtree('model', ignore_errors=True)
         total_elapsed = time() - start
         logger.success(f"Total run completed in {format_time(total_elapsed)} seconds")
         return eval_results
@@ -131,9 +152,12 @@ class Trainer:
 if __name__ == "__main__":
     # Define training parameters
     data = os.path.join(data_dir, 'data.yaml')
-    epochs = 1
-    imgsz = 224
-    batch = 16
+    params = {
+        'epochs': 50,
+        'imgsz': 224,
+        'batch': 32,
+        'optimizer': 'SGD',
+    }
 
     hyps = {
         'lr0': 0.01,  # initial learning rate
@@ -150,5 +174,5 @@ if __name__ == "__main__":
     }
 
     trainer = Trainer(data=data, project_name="car-counting")
-    eval_results = trainer.run(epochs=epochs, imgsz=imgsz, batch=batch, **hyps)
+    eval_results = trainer.run(**params, **hyps)
     print(eval_results)
