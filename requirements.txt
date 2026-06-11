@@ -9,6 +9,7 @@ torchvision
 prometheus-client
 fastapi
 onnx
+onnxslim
 onnxruntime
 onnxruntime-gpu
 loguru
