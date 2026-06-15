@@ -7,21 +7,14 @@ class YOLOWrapper(mlflow.pyfunc.PythonModel):
         self.model = YOLO(model_path, task='detect')
         print(f"Loaded model from {model_path}")
 
-    def predict(self, model_input, params=None):
-        params = params or {}
-        preds = self.model.predict(model_input, **params)
+    def predict(self, context, model_input):
+        predict_fn = context.model_config.get('predict_fn', 'predict') if context.model_config else "predict"
+        
+        if predict_fn == 'predict': 
+            print("Predict model")       
+            preds = self.model.predict(model_input)
+        else:
+            print("Track model")
+            preds = self.model.track(model_input)
+
         return preds
-    
-if __name__ == "__main__":
-    class FakeContext:
-        def __init__(self, artifacts):
-            self.artifacts = artifacts
-
-    wrapper = YOLOWrapper()
-    context = FakeContext({'model_path': '/media/duke/Data/deployment/runs/detect/car-counting/train/weights/best.onnx'})
-    wrapper.load_context(context)
-
-    img_path = '/media/duke/Data/datasets/Car-1/test/images/IMG_0602_jpeg.rf.fdd986ef02f7e3c0086b989c11adc0bd.jpg'
-    params = {'imgsz': 224, 'conf': 0.25}
-    pred = wrapper.predict(model_input=img_path, params=params)
-    print(pred)

@@ -110,7 +110,7 @@ class Trainer:
 
     def run(self, epochs, imgsz, batch, **kwargs):
         start = time()
-        self.train(epochs, imgsz, batch, **kwargs)
+        # self.train(epochs, imgsz, batch, **kwargs)
         runs_dir = os.path.join(SETTINGS['runs_dir'], self.model.task, self.project_name)
         best_pt = os.path.join(runs_dir, 'train', 'weights', 'best.pt')
         best_onnx = os.path.join(runs_dir, 'train', 'weights', 'best.onnx')
@@ -132,7 +132,8 @@ class Trainer:
                 path='model',
                 python_model=YOLOWrapper(),
                 artifacts={'model_path': best_onnx},
-                code_paths=[wrapper_path]
+                code_paths=[wrapper_path],
+                model_config={'predict_fn': 'predict'}
             )
 
             mlflow.pyfunc.log_model(
@@ -140,6 +141,7 @@ class Trainer:
                 python_model=YOLOWrapper(),
                 artifacts={'model_path': best_onnx},
                 code_paths=[wrapper_path],
+                model_config={'predict_fn': 'predict'}
             )
 
             logger.info(f"Run id: {mlflow.active_run().info.run_id}")
@@ -153,16 +155,17 @@ if __name__ == "__main__":
     # Define training parameters
     data = os.path.join(data_dir, 'data.yaml')
     params = {
-        'epochs': 50,
+        'epochs': 150,
         'imgsz': 224,
         'batch': 32,
         'optimizer': 'SGD',
+        'patience': 20,
     }
 
     hyps = {
         'lr0': 0.01,  # initial learning rate
         'lrf': 0.01,  # final learning rate (multiplier)
-        'momentum': 0.937,  # SGD momentum
+        # 'momentum': 0.937,  # SGD momentum
         'weight_decay': 0.0005,  # optimizer weight decay
         'scale': 0.5,  # image scale (default 0.5)
         'fliplr': 0.5,  # horizontal flip probability
