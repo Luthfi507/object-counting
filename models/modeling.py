@@ -133,7 +133,7 @@ class Trainer:
                 python_model=YOLOWrapper(),
                 artifacts={'model_path': best_onnx},
                 code_paths=[wrapper_path],
-                model_config={'predict_fn': 'predict'}
+                model_config={'predict_fn': 'predict', 'params': {}}
             )
 
             mlflow.pyfunc.log_model(
@@ -141,7 +141,7 @@ class Trainer:
                 python_model=YOLOWrapper(),
                 artifacts={'model_path': best_onnx},
                 code_paths=[wrapper_path],
-                model_config={'predict_fn': 'predict'}
+                model_config={'predict_fn': 'predict', 'params': {}}
             )
 
             logger.info(f"Run id: {mlflow.active_run().info.run_id}")

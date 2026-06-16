@@ -9,12 +9,11 @@ class YOLOWrapper(mlflow.pyfunc.PythonModel):
 
     def predict(self, context, model_input):
         predict_fn = context.model_config.get('predict_fn', 'predict') if context.model_config else "predict"
+        params = context.model_config.get('params', {})
         
         if predict_fn == 'predict': 
-            print("Predict model")       
-            preds = self.model.predict(model_input)
+            preds = self.model.predict(model_input, **params)
         else:
-            print("Track model")
-            preds = self.model.track(model_input)
+            preds = self.model.track(model_input, **params)
 
         return preds
