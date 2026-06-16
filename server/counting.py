@@ -10,11 +10,20 @@ from loguru import logger
 
 load_dotenv()
 
-LINE = (700, 120, 1280, 120)
+LINE = (700, 120, 1300, 120)
 
 model_name = os.getenv('MLFLOW_MODEL_NAME')
 alias = os.getenv('MLFLOW_MODEL_ALIAS')
-model = mlflow.pyfunc.load_model(f'models:/{model_name}@{alias}', model_config={'predict_fn': 'track'})
+params = {
+    'mode': 'track',
+    'persist': True,
+    'verbose': False,
+    'tracker': 'bytetrack.yaml',
+    'augment': False,
+    'conf': 0.4
+}
+
+model = mlflow.pyfunc.load_model(f'models:/{model_name}@{alias}', model_config={'params': params, 'predict_fn': 'track'})
 
 video_path = os.path.join(
     os.path.dirname(__file__),
@@ -22,29 +31,8 @@ video_path = os.path.join(
 )
 
 track_history = defaultdict(list)
-counted_ids = set()
-
-count_in = 0
-count_out = 0
-
-def get_center(box):
-    x1, y1, x2, y2 = box
-    return (
-        (x1 + x2) / 2,
-        (y1 + y2) / 2
-    )
-
-def side_of_line(point, line):
-    x, y = point
-    x1, y1, x2, y2 = line
-
-    return (
-        (x - x1) * (y2 - y1)
-        - (y - y1) * (x2 - x1)
-    )
 
 cap = cv2.VideoCapture(video_path)
-
 ret, frame = cap.read()
 rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
@@ -58,17 +46,13 @@ ax.axis("off")
 img_display = ax.imshow(rgb_frame)
 
 plt.show(block=False)
-
 cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
 try:
-
     while True:
-
         ret, frame = cap.read()
-
         if not ret:
-            print("Video has done.")
+            logger.info("Video has done")
             break
 
         results = model.predict(frame)
@@ -76,69 +60,24 @@ try:
 
         for r in results:
             annotated_frame = r.plot()
+            boxes = r.boxes
 
-            if r.boxes.id is None:
+            if boxes.id is None:
                 continue
 
-            boxes = r.boxes.xyxy.cpu().numpy()
-            track_ids = r.boxes.id.cpu().numpy().astype(int)
+            track_ids = boxes.id.cpu().numpy().astype(int)
+            boxes = boxes.xyxy.cpu().numpy()
 
             for box, track_id in zip(boxes, track_ids):
-
                 track_history[track_id].append(box)
-
-                if len(track_history[track_id]) < 2:
-                    continue
-
-                prev_box = track_history[track_id][-2]
-                curr_box = track_history[track_id][-1]
-
-                prev_center = get_center(prev_box)
-                curr_center = get_center(curr_box)
-
-                prev_side = side_of_line(prev_center, LINE)
-                curr_side = side_of_line(curr_center, LINE)
-
-                crossed = (
-                    prev_side * curr_side < 0
-                )
-
-                if crossed and track_id not in counted_ids:
-
-                    if curr_center[1] > prev_center[1]:
-                        count_in += 1
-
-                    # Bergerak naik
-                    else:
-                        count_out += 1
-
-                    counted_ids.add(track_id)
-
-        cv2.line(
-            annotated_frame,
-            (LINE[0], LINE[1]),
-            (LINE[2], LINE[3]),
-            (0, 255, 0),
-            3
-        )
 
         cv2.putText(
             annotated_frame,
-            f"IN : {count_in}",
+            f"Count: {len(list(track_history.keys()))}",
             (20, 40),
             cv2.FONT_HERSHEY_SIMPLEX,
             1,
             (0, 255, 0),
-            2
-        )
-
-        cv2.putText(
-            annotated_frame,
-            f"OUT: {count_out}",
-            (20, 80),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            1,
-            (0, 255, 255),
             2
         )
 
@@ -148,19 +87,17 @@ try:
         )
 
         img_display.set_data(rgb_frame)
-
         fig.canvas.draw_idle()
         fig.canvas.flush_events()
 
         if not plt.fignum_exists(fig.number):
-            print("Window closed.")
+            logger.info("Window closed")
             break
 
         cv2.waitKey(1)
 
 except KeyboardInterrupt:
-    print("User stopped the counting.")
-
+    logger.info("User stopped the process")
 finally:
     cap.release()
     plt.close()
