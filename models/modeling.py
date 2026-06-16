@@ -7,6 +7,7 @@ from time import time
 from loguru import logger
 from ultralytics import YOLO
 from ultralytics.utils import SETTINGS, downloads
+from ultralytics.utils.callbacks.mlflow import callbacks
 import torch
 
 import mlflow
@@ -29,7 +30,7 @@ SETTINGS.update(
 def format_time(t: float):
     return timedelta(seconds=t)
 
-def custom_on_train_end(trainer):
+def on_train_end(trainer):
     save_dir: Path = trainer.save_dir
     best_onnx = save_dir / 'weights/best.onnx'
 
@@ -52,23 +53,25 @@ def custom_on_train_end(trainer):
         mlflow.end_run()
         logger.debug(f"mlflow run ended")
 
+print(callbacks)
+callbacks['on_train_end'] = on_train_end
+
 class Trainer:
     def __init__(self, data, model_type='yolo11m'):
         self.data = data
         self.model_type = model_type
-        self.model = None
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         logger.info(f"Using device: {self.device}")
 
-    def train(self, epochs, imgsz, batch, **kwargs):
-        logger.info(f"Starting training with model: {self.model_type}")
-        start = time()
-
+    def load_model(self):
         if not (Path(SETTINGS['weights_dir']) / f"{self.model_type}.pt").exists():
             logger.warning(f"Model weights for {self.model_type} not found. Attempting to download...")
             downloads.attempt_download_asset(f"{self.model_type}.pt", dir=SETTINGS['weights_dir'])
         self.model = YOLO(f"{self.model_type}.pt")
-        self.model.callbacks['on_train_end'] = [custom_on_train_end]
+
+    def train(self, epochs, imgsz, batch, **kwargs):
+        logger.info(f"Start training with model: {self.model_type}")
+        start = time()
 
         result = self.model.train(
             data=self.data,
@@ -80,16 +83,15 @@ class Trainer:
             exist_ok=True,
             **kwargs
         )
-        self.model.export(format='onnx', dynamic=True)
+        self.model.export(format='onnx', dynamic=True)            
         elapsed = time() - start
         logger.success(f"Training completed in {format_time(elapsed)} seconds")
         return result.save_dir
 
-    def eval(self, best_path):
+    def eval(self):
         logger.info("Evaluating model...")
         start = time()
-        model = YOLO(best_path)
-        results = model.val(
+        results = self.model.val(
             data=self.data,
             split='test',
             imgsz=224,
@@ -105,10 +107,10 @@ class Trainer:
 
     def run(self, epochs, imgsz, batch, **kwargs):
         start = time()
+        self.load_model()
 
-        save_dir = self.train(epochs, imgsz, batch, **kwargs)
-        best_pt = save_dir / 'weights/best.pt'
-        eval_results = self.eval(best_pt)
+        self.train(epochs, imgsz, batch, **kwargs)
+        eval_results = self.eval()
 
         total_elapsed = time() - start
         logger.success(f"Total run completed in {format_time(total_elapsed)} seconds")
