@@ -1,6 +1,6 @@
 from collections import defaultdict
 from dotenv import load_dotenv
-
+import time
 import cv2
 import os
 import matplotlib.pyplot as plt
@@ -93,8 +93,7 @@ try:
         if not plt.fignum_exists(fig.number):
             logger.info("Window closed")
             break
-
-        cv2.waitKey(1)
+        time.sleep(0.01)
 
 except KeyboardInterrupt:
     logger.info("User stopped the process")
