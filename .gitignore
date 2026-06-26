@@ -1,6 +1,7 @@
 # Custom ignored files for Python projects
 debugging/
 output/
+models/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
