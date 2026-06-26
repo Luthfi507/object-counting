@@ -5,10 +5,11 @@ from datetime import datetime, timedelta
 import pytz
 from time import time
 from loguru import logger
+import torch
+
 from ultralytics import YOLO
 from ultralytics.utils import SETTINGS, downloads
 from ultralytics.utils.callbacks.mlflow import callbacks
-import torch
 
 import mlflow
 from wrapper import YOLOWrapper
@@ -32,6 +33,8 @@ def format_time(t: float):
 
 def on_train_end(trainer):
     save_dir: Path = trainer.save_dir
+    model = YOLO(save_dir / 'weights/best.pt')
+    model.export(format='onnx', dynamic=True)
     best_onnx = save_dir / 'weights/best.onnx'
 
     for f in save_dir.glob('*'):
@@ -53,7 +56,6 @@ def on_train_end(trainer):
         mlflow.end_run()
         logger.debug(f"mlflow run ended")
 
-print(callbacks)
 callbacks['on_train_end'] = on_train_end
 
 class Trainer:
@@ -83,7 +85,6 @@ class Trainer:
             exist_ok=True,
             **kwargs
         )
-        self.model.export(format='onnx', dynamic=True)            
         elapsed = time() - start
         logger.success(f"Training completed in {format_time(elapsed)} seconds")
         return result.save_dir
@@ -116,6 +117,8 @@ class Trainer:
         logger.success(f"Total run completed in {format_time(total_elapsed)} seconds")
         return eval_results
     
+    # TODO adding to store model runs only to mlflow without train model
+    
 if __name__ == "__main__":
     # Define training parameters
     data = os.path.join(DATA_DIR, 'data.yaml')
@@ -141,6 +144,6 @@ if __name__ == "__main__":
         'erasing': 0.2,  # random erasing probability
     }
 
-    trainer = Trainer(data, 'yolo26m')
+    trainer = Trainer(data, 'yolo11m')
     eval_results = trainer.run(**params, **hyps)
     print(eval_results)
