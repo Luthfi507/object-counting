@@ -6,7 +6,7 @@ import time
 from config import MODEL_DIR
 
 class ModelVersion:
-    def __init__(self, name: str, alias: str, model_config: dict = None, poll_interval=60):
+    def __init__(self, name: str, alias: str, model_config: dict = {}, poll_interval=60):
         self.name = name
         self.alias = alias
         self.model_config = model_config
@@ -26,7 +26,7 @@ class ModelVersion:
     # Load model from mlflow
     def load_model(self):
         latest_version = self.get_version()
-        dst_path = MODEL_DIR / self.name
+        dst_path = MODEL_DIR / self.model_config.get('predict_fn', 'predict')
         dst_path.mkdir(exist_ok=True)
 
         if latest_version != self.current_version:
