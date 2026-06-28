@@ -3,12 +3,12 @@ from loguru import logger
 import threading
 import time
 
-from config import MODEL_DIR
+from config import MODEL_DIR, MODEL_NAME, MODEL_ALIAS
 
 class ModelVersion:
-    def __init__(self, name: str, alias: str, model_config: dict = {}, poll_interval=60):
-        self.name = name
-        self.alias = alias
+    def __init__(self, name: str = None, alias: str = None, model_config: dict = {}, poll_interval=60):
+        self.name = name if name else MODEL_NAME
+        self.alias = alias if alias else MODEL_ALIAS
         self.model_config = model_config
         self.poll_interval = poll_interval
         self.current_version = None
