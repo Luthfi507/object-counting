@@ -1,4 +1,3 @@
-import os
 import numpy as np
 from PIL import Image
 from io import BytesIO
@@ -10,10 +9,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, WebSocket, WebSock
 
 from utils import ModelVersion
 
-mv = ModelVersion(
-    os.getenv('MLFLOW_MODEL_NAME'),
-    os.getenv('MLFLOW_MODEL_ALIAS'),
-)
+mv = ModelVersion()
 
 params = {
     'mode': 'track',
@@ -23,12 +19,7 @@ params = {
     'augment': False,
     'conf': 0.4
 }
-mv_track = ModelVersion(
-    os.getenv('MLFLOW_MODEL_NAME'),
-    os.getenv('MLFLOW_MODEL_ALIAS'),
-    {'params': params, 'predict_fn': 'track'},
-    600
-)
+mv_track = ModelVersion(model_config={'params': params, 'predict_fn': 'track'})
 
 app = FastAPI()
 
@@ -77,25 +68,33 @@ async def track(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_bytes()
-            logger.debug(f"Get data: {len(data)}")
+            start_time = time()
             detections = []
             
             try:
+                t1 = time()
                 np_arr = np.frombuffer(data, np.uint8)
                 frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+                logger.debug(f"Decode image: {time() - t1:.2f}")
+
+                t1 = time()
                 results = mv_track.predict(frame)
+                logger.debug(f"Predict: {time() - t1:.2f}")
 
                 for r in results:
                     boxes = r.boxes
-                    annotated_frame = r.plot()
 
+                    t1 = time()
+                    annotated_frame = r.plot()
+                    logger.debug(f"Plot frame: {time() - t1:.2f}s")
+                    
                     if boxes.id is None:
                         continue
-
+                    
                     track_ids = boxes.id.cpu().numpy().astype(int)
                     bboxes = boxes.xyxy.cpu().numpy()
                     cls_ids = boxes.cls.cpu().numpy().astype(int)
-
+                    
                     for box, track_id, cls_id in zip(bboxes, track_ids, cls_ids):
                         x1, y1, x2, y2 = box.tolist()
                         detections.append({
@@ -103,15 +102,21 @@ async def track(websocket: WebSocket):
                             "bbox": {"x1": x1, "y1": y1, "x2": x2, "y2": y2},
                             "name": r.names[int(cls_id)]
                         })
-
-                    _, encoded_img = cv2.imencode('.jpg', annotated_frame)
-                    annotated_b64 = base64.b64encode(encoded_img.tobytes()).decode('utf-8')
-
-                    await websocket.send_json({
-                        "detection": detections,
-                        "annotated_frame": annotated_b64
-                    })
-
+                
+                t1 = time()
+                _, encoded_img = cv2.imencode('.jpg', annotated_frame)
+                annotated_b64 = base64.b64encode(encoded_img.tobytes()).decode('utf-8')
+                logger.debug(f"Encode image: {time() - t1:.2f}s")
+                
+                t1 = time()
+                await websocket.send_json({
+                    "detection": detections,
+                    "annotated_frame": annotated_b64
+                })
+                logger.debug(f"Send response: {time() - t1:.2f}s")
+                
+                logger.info(f"Total processing time: {time() - start_time:.2f}s")
+                
             except Exception as e:
                 logger.exception(f"Error prediction: {e}")
         
