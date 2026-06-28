@@ -1,0 +1,9 @@
+ultralytics==8.4.71
+mlflow==3.14.0
+fastapi==0.137.2
+websockets==16.0
+onnx==1.22.0
+onnxruntime==1.27.0
+onnxruntime-gpu==1.26.0
+loguru==0.7.3
+python-multipart==0.0.32

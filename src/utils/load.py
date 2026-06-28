@@ -20,7 +20,7 @@ class ModelVersion:
     # Check production model version
     def get_version(self):
         client = mlflow.MlflowClient()
-        versions = client.get_model_version_by_alias(self.name, self.alias)
+        versions = client.get_model_version_by_alias(name=self.name, alias=self.alias)
         return versions.version
     
     # Load model from mlflow

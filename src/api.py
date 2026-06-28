@@ -26,7 +26,8 @@ params = {
 mv_track = ModelVersion(
     os.getenv('MLFLOW_MODEL_NAME'),
     os.getenv('MLFLOW_MODEL_ALIAS'),
-    {'params': params, 'predict_fn': 'track'}
+    {'params': params, 'predict_fn': 'track'},
+    600
 )
 
 app = FastAPI()
@@ -76,6 +77,7 @@ async def track(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_bytes()
+            logger.debug(f"Get data: {len(data)}")
             detections = []
             
             try:
